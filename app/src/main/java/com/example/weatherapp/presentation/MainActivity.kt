@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
+import com.example.weatherapp.data.model.Units
 import com.example.weatherapp.data.network.WeatherApi
 import com.example.weatherapp.presentation.theme.WeatherAppTheme
 import kotlinx.coroutines.MainScope
@@ -36,7 +37,8 @@ class MainActivity : ComponentActivity() {
         fetchWeather(
             lat = 59.938233124605226,
             lon = 30.358811825486548,
-            "421131f71c7500a8d35943680edd5ae1"
+            apiKey = "421131f71c7500a8d35943680edd5ae1",
+            units = Units.METRIC.value
         )
         setContent {
             WeatherAppTheme {
@@ -50,11 +52,16 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun fetchWeather(lat: Double, lon: Double, apiKey: String) {
+    private fun fetchWeather(
+        lat: Double,
+        lon: Double,
+        apiKey: String,
+        units: String = Units.METRIC.value
+    ) {
         try {
             MainScope().launch {
                 // Результат вызова ручки getCurrentWeather.
-                val result = service.getCurrentWeather(lat, lon, apiKey)
+                val result = service.getCurrentWeather(lat, lon, apiKey, units)
                 // изменение состояния значения ответа на запрос().
                 textViewState.value = result.toString()
                 println(textViewState)
