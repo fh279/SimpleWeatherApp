@@ -38,12 +38,6 @@ class MainActivity : ComponentActivity() {
         .addConverterFactory(GsonConverterFactory.create())
         .build()
         .create(WeatherApi::class.java)
-    private val currentWeather = fetchWeather(
-        lat = 59.938233124605226,
-        lon = 30.358811825486548,
-        apiKey = "421131f71c7500a8d35943680edd5ae1",
-        units = Units.METRIC.value
-    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
