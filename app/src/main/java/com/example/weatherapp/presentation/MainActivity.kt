@@ -12,11 +12,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
+import com.example.weatherapp.data.model.CloudsResponse
+import com.example.weatherapp.data.model.CoordinateResponse
+import com.example.weatherapp.data.model.DescriptionWeather
+import com.example.weatherapp.data.model.MainResponse
+import com.example.weatherapp.data.model.RainResponse
+import com.example.weatherapp.data.model.SysResponse
 import com.example.weatherapp.data.model.Units
+import com.example.weatherapp.data.model.WeatherResponse
+import com.example.weatherapp.data.model.WindResponse
 import com.example.weatherapp.data.network.WeatherApi
 import com.example.weatherapp.presentation.theme.WeatherAppTheme
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+// import kotlinx.coroutines.runBlocking
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
@@ -30,6 +38,12 @@ class MainActivity : ComponentActivity() {
         .addConverterFactory(GsonConverterFactory.create())
         .build()
         .create(WeatherApi::class.java)
+    private val currentWeather = fetchWeather(
+        lat = 59.938233124605226,
+        lon = 30.358811825486548,
+        apiKey = "421131f71c7500a8d35943680edd5ae1",
+        units = Units.METRIC.value
+    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,6 +61,15 @@ class MainActivity : ComponentActivity() {
                         name = textViewState,
                         modifier = Modifier.padding(innerPadding)
                     )
+                    Text(
+                        modifier = Modifier.padding(innerPadding),
+                        text = /*"Alala"*/fetchWeather(
+                            lat = 59.938233124605226,
+                            lon = 30.358811825486548,
+                            apiKey = "421131f71c7500a8d35943680edd5ae1",
+                            units = Units.METRIC.value
+                        ).main.temp.toString()
+                    )
                 }
             }
         }
@@ -57,25 +80,15 @@ class MainActivity : ComponentActivity() {
         lon: Double,
         apiKey: String,
         units: String = Units.METRIC.value
-    ) {
-        try {
-            MainScope().launch {
-                // Результат вызова ручки getCurrentWeather.
-                val result = service.getCurrentWeather(lat, lon, apiKey, units)
-                // изменение состояния значения ответа на запрос().
-                textViewState.value = result.toString()
-                println(textViewState)
-            }
-        } catch (_:Exception) {
-            println("Не удалось получить ответ")
-        }
-    }
+    ): WeatherResponse {
+        return runBlocking { service.getCurrentWeather(lat, lon, apiKey, units) }
 }
 
-@Composable
-fun Greeting(name: MutableState<String>, modifier: Modifier = Modifier) {
-    Text(
-        text = name.value,
-        modifier = modifier
-    )
+    @Composable
+    fun Greeting(name: MutableState<String>, modifier: Modifier = Modifier) {
+        Text(
+            text = name.value,
+            modifier = modifier
+        )
+    }
 }
