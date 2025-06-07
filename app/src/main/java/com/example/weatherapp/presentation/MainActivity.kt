@@ -49,16 +49,9 @@ class MainActivity : ComponentActivity() {
         .build()
         .create(WeatherApi::class.java)
 
-    @OptIn(DelicateCoroutinesApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        /*fetchWeather(
-            lat = 59.938233124605226,
-            lon = 30.358811825486548,
-            apiKey = "421131f71c7500a8d35943680edd5ae1",
-            units = Units.METRIC.value
-        )*/
         setContent {
             WeatherAppTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
@@ -66,17 +59,21 @@ class MainActivity : ComponentActivity() {
                         name = textViewState,
                         modifier = Modifier.padding(innerPadding)
                     )
+                    Text("", modifier = Modifier)
                     Text(
                         text = LaunchedEffect(true) {
-                            /*val result = scope.*/async {
-                            fetchWeather(
-                                lat = 59.938233124605226,
-                                lon = 30.358811825486548,
-                                apiKey = "421131f71c7500a8d35943680edd5ae1",
-                                units = Units.METRIC.value
-                            )
-                        }.await().main.temp.toString()
-                    },
+                            async {
+                                /*val result = scope.*/ // async {
+                                fetchWeather(
+                                    lat = 59.938233124605226,
+                                    lon = 30.358811825486548,
+                                    apiKey = "421131f71c7500a8d35943680edd5ae1",
+                                    units = Units.METRIC.value
+                                )
+                                // Что-то я откуда-то не правильно беру.....
+                                // }.await().main.temp.toString()
+                            } // .await().main.temp.toString()
+                        },
                         modifier = Modifier
                     )
                 }
