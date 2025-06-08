@@ -24,7 +24,6 @@ private const val BASE_URL = "https://api.openweathermap.org/"
 class MainActivity : ComponentActivity() {
     private val result: MutableState<WeatherResponse?> = mutableStateOf(null)
 
-    private var textViewState: MutableState<String> = mutableStateOf("")
     // 1.1 Создание Ретрофита
     private val service = Retrofit.Builder()
         .baseUrl(BASE_URL)
