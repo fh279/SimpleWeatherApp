@@ -31,15 +31,18 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 private const val BASE_URL = "https://api.openweathermap.org/"
 
 class MainActivity : ComponentActivity() {
 
-    val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+    // val scope = CoroutineScope(Dispatchers.IO)
+    var result: WeatherResponse? = null
 
     private var textViewState: MutableState<String> = mutableStateOf("")
     // 1.1 Создание Ретрофита
@@ -52,6 +55,15 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        runBlocking {
+
+            result = fetchWeather(
+                lat = 59.938233124605226,
+                lon = 30.358811825486548,
+                apiKey = "421131f71c7500a8d35943680edd5ae1",
+                units = Units.METRIC.value
+            )
+        }
         setContent {
             WeatherAppTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
@@ -59,21 +71,8 @@ class MainActivity : ComponentActivity() {
                         name = textViewState,
                         modifier = Modifier.padding(innerPadding)
                     )
-                    Text("", modifier = Modifier)
                     Text(
-                        text = LaunchedEffect(true) {
-                            async {
-                                /*val result = scope.*/ // async {
-                                fetchWeather(
-                                    lat = 59.938233124605226,
-                                    lon = 30.358811825486548,
-                                    apiKey = "421131f71c7500a8d35943680edd5ae1",
-                                    units = Units.METRIC.value
-                                )
-                                // Что-то я откуда-то не правильно беру.....
-                                // }.await().main.temp.toString()
-                            } // .await().main.temp.toString()
-                        },
+                        text = result?.main?.temp.toString(),
                         modifier = Modifier
                     )
                 }
