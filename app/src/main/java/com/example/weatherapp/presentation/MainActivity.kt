@@ -4,14 +4,19 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.sp
 import com.example.weatherapp.data.model.Units
 import com.example.weatherapp.data.model.WeatherResponse
 import com.example.weatherapp.data.network.WeatherApi
@@ -46,17 +51,26 @@ class MainActivity : ComponentActivity() {
                             units = Units.METRIC.value
                         )
                     } catch (e: Exception) {
-                        e.printStackTrace()
                         println("Achtung! Alarma! Ниже будет стектрейс...")
+                        e.printStackTrace()
                     }
                 }
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Text(
-                        text = result.value?.main?.temp.toString(),
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                    Box {
+                        Column {
+                            OutlinedTextField(
+                                value = "${result.value?.main?.temp.toString()} ℃",
+                                onValueChange = {},
+                                label = { Text("Температура сейчас в Питере:") },
+                                placeholder = { Text("Тут будет температура") },
+                                modifier = Modifier.padding(innerPadding),
+                                textStyle = TextStyle(fontSize = 25.sp)
 
+                            )
+                        }
+
+                    }
+                }
                 }
             }
         }
