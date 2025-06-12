@@ -1,6 +1,8 @@
 package com.example.weatherapp.presentation
 
 import android.os.Bundle
+import android.os.Environment
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -19,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.sp
+import com.example.weatherapp.R
 import com.example.weatherapp.data.model.Units
 import com.example.weatherapp.data.model.WeatherResponse
 import com.example.weatherapp.data.network.WeatherApi
@@ -29,6 +32,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 private const val BASE_URL = "https://api.openweathermap.org/"
 
 class MainActivity : ComponentActivity() {
+    private val context = this@MainActivity
     private val result: MutableState<WeatherResponse?> = mutableStateOf(null)
 
     // 1.1 Создание Ретрофита
@@ -53,30 +57,25 @@ class MainActivity : ComponentActivity() {
                             units = Units.METRIC.value
                         )
                     } catch (e: Exception) {
-                        println("Achtung! Alarma! Ниже будет стектрейс...")
+                        Log.e("ОШИБКО!11", "Achtung! Alarma! Ниже будет стектрейс...")
                         e.printStackTrace()
                     }
                 }
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Box {
                         Column(
                             Modifier.fillMaxSize(),
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center
                         ) {
-
                             OutlinedTextField(
                                 value = "${result.value?.main?.temp.toString()} ℃",
                                 onValueChange = {},
-                                label = { Text("Температура сейчас в Питере:") },
-                                placeholder = { Text("Тут будет температура") },
+                                label = { Text(context.getString(R.string.main_temperature_Label)) },
+                                placeholder = { Text(context.getString(R.string.main_temperature_Label)) },
                                 modifier = Modifier.padding(innerPadding),
                                 textStyle = TextStyle(fontSize = 25.sp)
-
                             )
                         }
-
-                    }
                 }
                 }
             }
