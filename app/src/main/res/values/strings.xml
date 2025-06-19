@@ -4,5 +4,6 @@
     <string name = "main_temperature_hint">Тут будет температура</string>
     <string name = "smth">%s ℃</string>
     <string name = "request_error">ОШИБКО!11", "Achtung! Alarma! Ниже будет стектрейс...</string>
+    <string name = "weather_request_button_text">Запросить погоду</string>
 
 </resources>
