@@ -34,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import com.example.weatherapp.R
@@ -225,11 +226,13 @@ class MainActivity : ComponentActivity() {
             )
 
             DropdownMenu(
+                modifier = Modifier.testTag(MainScreenTags.dropdownMenu),
                 expanded = expanded,
                 onDismissRequest = { expanded = false }
             ) {
                 items.forEach { item ->
                     DropdownMenuItem(
+                        modifier = Modifier.testTag(MainScreenTags.dropdownMenuItem(item.name)),
                         onClick = {
                         selectedItem = item
                         currentCity = selectedItem
@@ -247,6 +250,13 @@ class MainActivity : ComponentActivity() {
         Button(onClick = { state.value = State.Nothing }) {
             Text(text = this@MainActivity.getString(R.string.return_to_main_screen))
         }
+    }
+
+    object MainScreenTags {
+        val root = "MainScreen"
+        val dropdownMenu = "$root.dropdownMenu"
+
+        fun dropdownMenuItem(city: String) = "$root.dropdownMenuItem.$city"
     }
 }
 // как задать кастомный цвет Dovoder'у?
