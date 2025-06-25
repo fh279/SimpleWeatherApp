@@ -1,6 +1,5 @@
 package com.example.weatherapp.presentation
 
-// import androidx.compose.material3.HorizontalDivider
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -10,19 +9,22 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Snackbar
-import androidx.compose.material3.SnackbarData
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -32,11 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.lifecycleScope
 import com.example.weatherapp.R
 import com.example.weatherapp.data.model.Units
@@ -46,7 +44,7 @@ import com.example.weatherapp.presentation.theme.LightColorScheme
 import com.example.weatherapp.presentation.theme.WeatherAppTheme
 import kotlinx.coroutines.launch
 
-sealed class State() {
+sealed class State {
     // состояние по умолчанию
     data object Loading : State()
     data class Success(
@@ -61,28 +59,15 @@ sealed class State() {
 class MainActivity : ComponentActivity() {
     // Nothing поставил под кейс когда результат получается по нажатию на кнопку. Это надо сделать. Потом выпадающий список.
     private val state: MutableState<State> = mutableStateOf(State.Nothing)
+    val items = Cities.entries
+    var currentCity: Cities = Cities.SPB
+    // а можно сделать отложенную инициализацию типа вот так? val selectedItem: Cities by lazy { тут не понятно что писать, чем инициализировать }
     // или так - var isLoading by remember { mutableStateOf(false) }
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        /*lifecycleScope.launch {
-            try {
-                RetrofitProvider.fetchWeather(
-                    city = Cities.SPB,
-                    units = Units.METRIC.value
-                ).let {
-                    state.value = State.Success(it)
-                }
-            } catch (e: Exception) {
-                Log.e(
-                    "Alarma!!!",
-                    this@MainActivity.getString(R.string.request_error)
-                )
-                e.printStackTrace()
-            }
-        }*/
         setContent {
             WeatherAppTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
@@ -120,18 +105,19 @@ class MainActivity : ComponentActivity() {
 
                 State.Error -> println("i chto?..")
                 State.Nothing -> {
-                    // val nothingState = (state.value as State.Nothing)
+                    DropDownList()
                     FetchButton()
                 }
 
                 is State.Success -> {
                     val weather = (state.value as State.Success).weather
                     Text(
-                        text = weather.main.temp.toString()
+                        text = "Погода в $currentCity: ${weather.main.temp}"
                     )
                     /*Text(
                         // "${result.value?.main?.temp.toString()} ℃", // вот это хорошо, но надо дописать проверку на null что бы не получилось так что бы у нас высветилось "null градусов цельсия".
-                        value = *//*вот тут нужна проверка на null*//* String.format(
+                        value = */
+                    /*вот тут нужна проверка на null*//* String.format(
                             format = this@MainActivity.getString(R.string.smth),
                             args = arrayOf(weather.main.temp.toString())
                         ),
@@ -144,7 +130,8 @@ class MainActivity : ComponentActivity() {
                             .padding(vertical = 0.dp),
                         textStyle = TextStyle(fontSize = 25.sp)
                     )*/
-                    FetchButton()
+                    // FetchButton()
+                    ReturnToMainButton()
                 }
             }
 
@@ -191,7 +178,7 @@ class MainActivity : ComponentActivity() {
                 lifecycleScope.launch {
                     try {
                         RetrofitProvider.fetchWeather(
-                            city = Cities.SPB,
+                            city =  currentCity /*Cities.SPB*/,
                             units = Units.METRIC.value
                         ).let {
                             state.value = State.Success(it)
@@ -211,5 +198,54 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @Composable
+    fun DropDownList() {
+
+        var expanded by remember { mutableStateOf(false) }
+        var selectedItem by remember { mutableStateOf(currentCity)  }
+
+        Column {
+            Text(text = this@MainActivity.getString(R.string.city_select))
+
+            Spacer(modifier = Modifier.size(10.dp))
+
+            OutlinedTextField(
+                value =  this@MainActivity.getString(selectedItem.cityName),
+                onValueChange = {},
+                modifier = Modifier.width(300.dp),
+                readOnly = true,
+                // В дальнейшем хочется сделать что бы дропдаун раскрывался по клику
+                // не trailingIcon, а всего текстового поля.
+                trailingIcon = {
+                    IconButton(onClick = { expanded = true }) {
+                        Icon(Icons.Default.ArrowDropDown, contentDescription = "Dropdown")
+                    }
+                }
+            )
+
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                items.forEach { item ->
+                    DropdownMenuItem(
+                        onClick = {
+                        selectedItem = item
+                        currentCity = selectedItem
+                        expanded = false
+                    },
+                        text = { Text(text = this@MainActivity.getString(item.cityName)) }
+                    )
+                }
+            }
+        }
+    }
+
+    @Composable
+    fun ReturnToMainButton() {
+        Button(onClick = { state.value = State.Nothing }) {
+            Text(text = this@MainActivity.getString(R.string.return_to_main_screen))
+        }
+    }
 }
 // как задать кастомный цвет Dovoder'у?
