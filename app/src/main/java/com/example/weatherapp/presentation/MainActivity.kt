@@ -67,6 +67,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.i("NETWORK INFO", RetrofitProvider(this@MainActivity).isThereInternetConnection().toString())
         enableEdgeToEdge()
         setContent {
             WeatherAppTheme {
@@ -177,7 +178,7 @@ class MainActivity : ComponentActivity() {
                 state.value = State.Loading
                 lifecycleScope.launch {
                     try {
-                        RetrofitProvider.fetchWeather(
+                        RetrofitProvider(this@MainActivity).fetchWeather(
                             city =  currentCity /*Cities.SPB*/,
                             units = Units.METRIC.value
                         ).let {
