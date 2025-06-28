@@ -46,29 +46,25 @@ import com.example.weatherapp.presentation.theme.WeatherAppTheme
 import kotlinx.coroutines.launch
 
 sealed class State {
-    // состояние по умолчанию
+    data object Start : State()
     data object Loading : State()
-    data class Success(
-        val weather: WeatherResponse
-    ) : State()
-
+    data class Success(val weather: WeatherResponse) : State()
     data object Error : State()
-    data object Nothing : State()
-
 }
 
 class MainActivity : ComponentActivity() {
+    val retrofitProvider: RetrofitProvider by lazy { RetrofitProvider(this@MainActivity) }
     // Nothing поставил под кейс когда результат получается по нажатию на кнопку. Это надо сделать. Потом выпадающий список.
-    private val state: MutableState<State> = mutableStateOf(State.Nothing)
+    private val state: MutableState<State> = mutableStateOf(State.Start)
     val items = Cities.entries
     var currentCity: Cities = Cities.SPB
-    // а можно сделать отложенную инициализацию типа вот так? val selectedItem: Cities by lazy { тут не понятно что писать, чем инициализировать }
+    // а можно сделать отложенную инициализацию типа вот так? val currentCity: Cities by lazy { тут не понятно что писать, чем инициализировать }
     // или так - var isLoading by remember { mutableStateOf(false) }
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Log.i("NETWORK INFO", RetrofitProvider(this@MainActivity).isThereInternetConnection().toString())
+        Log.i("NETWORK INFO", retrofitProvider.isThereInternetConnection().toString())
         enableEdgeToEdge()
         setContent {
             WeatherAppTheme {
@@ -106,7 +102,7 @@ class MainActivity : ComponentActivity() {
                     )
 
                 State.Error -> println("i chto?..")
-                State.Nothing -> {
+                State.Start -> {
                     DropDownList()
                     FetchButton()
                 }
@@ -116,59 +112,9 @@ class MainActivity : ComponentActivity() {
                     Text(
                         text = "Погода в $currentCity: ${weather.main.temp}"
                     )
-                    /*Text(
-                        // "${result.value?.main?.temp.toString()} ℃", // вот это хорошо, но надо дописать проверку на null что бы не получилось так что бы у нас высветилось "null градусов цельсия".
-                        value = */
-                    /*вот тут нужна проверка на null*//* String.format(
-                            format = this@MainActivity.getString(R.string.smth),
-                            args = arrayOf(weather.main.temp.toString())
-                        ),
-                        onValueChange = {},
-                        label = { Text(stringResource(id = R.string.main_temperature_Label)) },
-                        placeholder = { Text(stringResource(id = R.string.main_temperature_Label)) },
-                        // как уменьшить расстояние между верхним divider'ом и OutlinedTextField'ом?
-                        modifier = Modifier
-                            .padding(innerPadding)
-                            .padding(vertical = 0.dp),
-                        textStyle = TextStyle(fontSize = 25.sp)
-                    )*/
-                    // FetchButton()
                     ReturnToMainButton()
                 }
             }
-
-
-            /*Button(
-                onClick = {
-                    lifecycleScope.launch {
-                        try {
-                            state.value = RetrofitProvider.fetchWeather(
-                                city = Cities.SPB,
-                                units = Units.METRIC.value
-                            )
-                        } catch (e: Exception) {
-                            Log.e(
-                                "Alarma!!!",
-                                this@MainActivity.getString(R.string.request_error)
-                            )
-                            e.printStackTrace()
-                        }
-                    }
-                },
-            ) {
-                // вынести в ресурсы
-                Text("Запросить погоду")
-            }*/
-
-            /*Text(
-                text = if (isDarkTheme) "Включено" else "Выключено",
-                modifier = Modifier.padding(10.dp),
-                textAlign = TextAlign.Center
-            )
-            Switch(
-                checked = isDarkTheme,
-                onCheckedChange = { isChecked -> isDarkTheme = isChecked }
-            )*/
         }
     }
 
@@ -179,8 +125,8 @@ class MainActivity : ComponentActivity() {
                 state.value = State.Loading
                 lifecycleScope.launch {
                     try {
-                        RetrofitProvider(this@MainActivity).fetchWeather(
-                            city =  currentCity /*Cities.SPB*/,
+                        retrofitProvider.fetchWeather(
+                            city =  currentCity,
                             units = Units.METRIC.value
                         ).let {
                             state.value = State.Success(it)
@@ -195,22 +141,18 @@ class MainActivity : ComponentActivity() {
                 }
             },
         ) {
-            // вынести в ресурсы
             Text(this@MainActivity.getString(R.string.weather_request_button_text))
         }
     }
 
     @Composable
     fun DropDownList() {
-
         var expanded by remember { mutableStateOf(false) }
         var selectedItem by remember { mutableStateOf(currentCity)  }
 
         Column {
             Text(text = this@MainActivity.getString(R.string.city_select))
-
             Spacer(modifier = Modifier.size(10.dp))
-
             OutlinedTextField(
                 value =  this@MainActivity.getString(selectedItem.cityName),
                 onValueChange = {},
@@ -224,7 +166,6 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             )
-
             DropdownMenu(
                 modifier = Modifier.testTag(MainScreenTags.dropdownMenu),
                 expanded = expanded,
@@ -247,7 +188,7 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     fun ReturnToMainButton() {
-        Button(onClick = { state.value = State.Nothing }) {
+        Button(onClick = { state.value = State.Start }) {
             Text(text = this@MainActivity.getString(R.string.return_to_main_screen))
         }
     }

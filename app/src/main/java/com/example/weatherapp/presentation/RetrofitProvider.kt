@@ -2,6 +2,7 @@ package com.example.weatherapp.presentation
 
 import android.content.Context
 import android.net.ConnectivityManager
+import android.net.Network
 import android.net.NetworkCapabilities
 import com.example.weatherapp.data.model.Units
 import com.example.weatherapp.data.model.WeatherResponse
@@ -16,7 +17,7 @@ class RetrofitProvider(context: Context) {
     // Задача по проверке наличия интернета сводится к тому что непонятно как в RetrofitProvider прокидывать контекст :
 
     // зачем делается явное приведение к ConnectivityManager ? Да, я понимаю что без приведения переменная имеет тип Any. А почему именно ConnectivityManager ?
-    var cm: ConnectivityManager? = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    var connectivityManager: ConnectivityManager? = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 
 
 
@@ -39,11 +40,20 @@ class RetrofitProvider(context: Context) {
     }
 
     fun isThereInternetConnection(): Boolean {
-        val network = cm?.activeNetwork ?: return false
-        val activeNetwork = cm?.getNetworkCapabilities(network) ?: return false
+        /*Проблема. теряюсь в мелочах. надо ставить конкретные атомарные цели и достигать их. Пока так.
+        Кажется был вопрос о том что есть подтипы и супертипы, а так же наследники и дочерние классы. Какая в них разница?
+        мне что то надо было почитать важное. что?
+        Правильно ли понимаю что в Элвиса можно воткнуть return false потому что return возвращает Nothing, а Noghing это подтип всех типов.
+        уточнить определение Сервис в Андроиде
+        Уточнить понятие Manager (например, ConnectivityManager) в Android.
+        */
+        val network: Network = connectivityManager?.activeNetwork ?: return false
+        val activeNetwork = connectivityManager?.getNetworkCapabilities(network) ?: return false
+        // pattern matching - when реализует эту штуку. В Kotlin этого нет, но when это костыльная реализация pattern matching'а.
         return when {
             activeNetwork.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> true
             activeNetwork.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> true
+            activeNetwork.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> true
             else -> false
         }
     }
