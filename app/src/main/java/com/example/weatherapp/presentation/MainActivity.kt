@@ -53,7 +53,7 @@ sealed class State {
 }
 
 class MainActivity : ComponentActivity() {
-    val retrofitProvider: RetrofitProvider by lazy { RetrofitProvider(this@MainActivity) }
+    val retrofitProvider: RetrofitProvider by lazy { RetrofitProvider(applicationContext) }
     // Nothing поставил под кейс когда результат получается по нажатию на кнопку. Это надо сделать. Потом выпадающий список.
     private val state: MutableState<State> = mutableStateOf(State.Start)
     val items = Cities.entries
