@@ -8,7 +8,9 @@
     <string name = "SPb_name">Saint-P</string>
     <string name = "Moscow_name">Moscow</string>
     <string name = "Nsk_name">Nsk</string>
+    <string name = "Current_location_name">Текущее местоположение</string>
     <string name = "city_select">Выбери город:</string>
     <string name = "return_to_main_screen">Вертать взад</string>
+    <string name = "request_location_title">Запросить местоположение</string>
 
 </resources>
