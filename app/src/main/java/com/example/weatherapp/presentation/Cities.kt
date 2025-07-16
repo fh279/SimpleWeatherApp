@@ -5,8 +5,8 @@ import com.example.weatherapp.R
 
 enum class Cities(
     val cityName: Int,
-    val lat: Double,
-    val lon: Double
+    val lat: Double?,
+    val lon: Double?
 ) {
     MOSCOW(
         cityName = R.string.Moscow_name,
@@ -22,6 +22,11 @@ enum class Cities(
         cityName = R.string.Nsk_name,
         lat = 44.6333,
         lon = 41.9444
+    ),
+    CURRENT_LOCATION(
+        cityName = R.string.Current_location_name,
+        lat = null,
+        lon = null
     )
 
 }
