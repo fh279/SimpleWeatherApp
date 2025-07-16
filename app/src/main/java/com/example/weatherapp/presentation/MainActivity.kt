@@ -1,5 +1,10 @@
 package com.example.weatherapp.presentation
 
+import android.Manifest
+import android.annotation.SuppressLint
+import android.content.Context
+import android.content.pm.PackageManager
+import android.location.Location
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -36,35 +41,42 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.weatherapp.R
 import com.example.weatherapp.data.model.Units
-import com.example.weatherapp.data.model.WeatherResponse
+import com.example.weatherapp.presentation.model.Coordinates
+import com.example.weatherapp.presentation.model.MainScreenTags
+import com.example.weatherapp.presentation.model.WeatherState
+import com.example.weatherapp.presentation.model.WeatherState.Error
+import com.example.weatherapp.presentation.model.WeatherState.Loading
+import com.example.weatherapp.presentation.model.WeatherState.Start
+import com.example.weatherapp.presentation.model.WeatherState.Success
 import com.example.weatherapp.presentation.theme.DarkColorScheme
 import com.example.weatherapp.presentation.theme.LightColorScheme
 import com.example.weatherapp.presentation.theme.WeatherAppTheme
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.launch
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
 
-sealed class State {
-    data object Start : State()
-    data object Loading : State()
-    data class Success(val weather: WeatherResponse) : State()
-    data object Error : State()
-}
-
+@SuppressLint("MissingPermission")
 class MainActivity : ComponentActivity() {
-    val retrofitProvider: RetrofitProvider by lazy { RetrofitProvider(applicationContext) }
-    // Nothing поставил под кейс когда результат получается по нажатию на кнопку. Это надо сделать. Потом выпадающий список.
-    private val state: MutableState<State> = mutableStateOf(State.Start)
-    val items = Cities.entries
-    var currentCity: Cities = Cities.SPB
-    // а можно сделать отложенную инициализацию типа вот так? val currentCity: Cities by lazy { тут не понятно что писать, чем инициализировать }
-    // или так - var isLoading by remember { mutableStateOf(false) }
+    private val fusedLocationClient: FusedLocationProviderClient by lazy {
+        LocationServices.getFusedLocationProviderClient(this)
+    }
+    private val retrofitProvider: RetrofitProvider by lazy { RetrofitProvider(applicationContext) }
+    private val state: MutableState<WeatherState> = mutableStateOf(Start)
+    private val items = Cities.entries
+    private var currentCity: Cities = Cities.SPB
+    private var currentLocation: Coordinates = Coordinates(0.0, 0.0)
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Log.i("NETWORK INFO", retrofitProvider.isThereInternetConnection().toString())
         enableEdgeToEdge()
         setContent {
             WeatherAppTheme {
@@ -92,7 +104,7 @@ class MainActivity : ComponentActivity() {
             verticalArrangement = Arrangement.Center,
         ) {
             when (state.value) {
-                State.Loading ->
+                Loading ->
                     CircularProgressIndicator(
                         modifier = Modifier
                             .padding(16.dp)
@@ -101,17 +113,20 @@ class MainActivity : ComponentActivity() {
                         strokeWidth = 4.dp,
                     )
 
-                State.Error -> println("i chto?..")
-                State.Start -> {
+                Error -> println("i chto?..")
+                Start -> {
                     DropDownList()
-                    FetchButton()
+                    FetchWeatherButton()
+                    FetchLocationButton()
                 }
 
-                is State.Success -> {
-                    val weather = (state.value as State.Success).weather
+                is Success -> {
+                    val weather = (state.value as Success).weather
                     Text(
                         text = "Погода в $currentCity: ${weather.main.temp}"
                     )
+                    ShowCoordinatesText()
+
                     ReturnToMainButton()
                 }
             }
@@ -119,23 +134,19 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    fun FetchButton() {
+    fun FetchWeatherButton() {
         Button(
             onClick = {
-                state.value = State.Loading
+                state.value = Loading
                 lifecycleScope.launch {
                     try {
                         retrofitProvider.fetchWeather(
                             city =  currentCity,
                             units = Units.METRIC.value
                         ).let {
-                            state.value = State.Success(it)
+                            state.value = Success(it)
                         }
                     } catch (e: Exception) {
-                        Log.e(
-                            "Alarma!!!",
-                            this@MainActivity.getString(R.string.request_error)
-                        )
                         e.printStackTrace()
                     }
                 }
@@ -162,7 +173,10 @@ class MainActivity : ComponentActivity() {
                 // не trailingIcon, а всего текстового поля.
                 trailingIcon = {
                     IconButton(onClick = { expanded = true }) {
-                        Icon(Icons.Default.ArrowDropDown, contentDescription = "Dropdown")
+                        Icon(
+                            imageVector = Icons.Default.ArrowDropDown,
+                            contentDescription = null
+                        )
                     }
                 }
             )
@@ -175,9 +189,9 @@ class MainActivity : ComponentActivity() {
                     DropdownMenuItem(
                         modifier = Modifier.testTag(MainScreenTags.dropdownMenuItem(item.name)),
                         onClick = {
-                        selectedItem = item
-                        currentCity = selectedItem
-                        expanded = false
+                            selectedItem = item
+                            currentCity = selectedItem
+                            expanded = false
                     },
                         text = { Text(text = this@MainActivity.getString(item.cityName)) }
                     )
@@ -188,16 +202,69 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     fun ReturnToMainButton() {
-        Button(onClick = { state.value = State.Start }) {
+        Button(onClick = { state.value = Start }) {
             Text(text = this@MainActivity.getString(R.string.return_to_main_screen))
         }
     }
 
-    object MainScreenTags {
-        val root = "MainScreen"
-        val dropdownMenu = "$root.dropdownMenu"
+    @Composable
+    private fun FetchLocationButton() {
+        Button(onClick = {
+            // Add permissions request here
+            lifecycleScope.launch {
+                currentLocation = getCurrentLocation()
+                Log.i("REQUEST", "Запрос пошел")
+            }
+        }
+        ) {
+            Text(text = this@MainActivity.getString(R.string.request_location_title))
+        }
+    }
 
-        fun dropdownMenuItem(city: String) = "$root.dropdownMenuItem.$city"
+    @Composable
+    private fun ShowCoordinatesText() {
+        Column {
+            Text(text = "latitude = ${currentLocation.latitude}")
+            Text(text = "longitude = ${currentLocation.longitude}")
+        }
+    }
+
+    private suspend fun getCurrentLocation(): Coordinates {
+        val isGranted = checkSelfPermissions(
+            context = this,
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        )
+
+        return suspendCoroutine { continuation: Continuation<Coordinates> ->
+            if (isGranted) {
+                Log.i("REQUEST INFO", "Пермиссии даны")
+                fusedLocationClient.lastLocation
+                    .addOnSuccessListener { location: Location ->
+                        continuation.resume(Coordinates(location.latitude, location.longitude))
+                    }
+                    .addOnFailureListener { exception ->
+                        continuation.resumeWithException(
+                            IllegalStateException(exception)
+                        )
+                    }
+            } else {
+                val permissions = arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                )
+                ActivityCompat.requestPermissions(this, permissions,0)
+            }
+        }
+    }
+
+
+    private fun checkSelfPermissions(
+        context: Context,
+        vararg permissions: String
+    ): Boolean {
+        return permissions.all {
+            ActivityCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
+        }
     }
 }
-// как задать кастомный цвет Dovoder'у?
