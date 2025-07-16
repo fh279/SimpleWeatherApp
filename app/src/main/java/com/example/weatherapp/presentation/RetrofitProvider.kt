@@ -33,8 +33,8 @@ class RetrofitProvider(context: Context) {
         units: String = Units.METRIC.value
     ): WeatherResponse {
         return service.getCurrentWeather(
-            lat = city.lat,
-            lon = city.lon,
+            lat = city.lat ?: 100500.0,
+            lon = city.lon ?: 100500.0,
             units = units
         )
     }
