@@ -1,3 +1,14 @@
 <resources>
     <string name="app_name">WeatherApp</string>
+    <string name = "main_temperature_Label">Температура сейчас в Питере:</string>
+    <string name = "main_temperature_hint">Тут будет температура</string>
+    <string name = "smth">%s ℃</string>
+    <string name = "request_error">ОШИБКО!11", "Achtung! Alarma! Ниже будет стектрейс...</string>
+    <string name = "weather_request_button_text">Запросить погоду</string>
+    <string name = "SPb_name">Saint-P</string>
+    <string name = "Moscow_name">Moscow</string>
+    <string name = "Nsk_name">Nsk</string>
+    <string name = "city_select">Выбери город:</string>
+    <string name = "return_to_main_screen">Вертать взад</string>
+
 </resources>
